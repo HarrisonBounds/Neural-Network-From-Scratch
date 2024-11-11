@@ -1,22 +1,7 @@
 import pandas as pd
 import numpy as np
 
-train_filename = "center_surround_train.csv"
-validate_filename = "center_surround_valid.csv"
-test_filename = "center_surround_test.csv"
-label_string = "label"
 
-X = pd.read_csv(train_filename)
-V = pd.read_csv(validate_filename)
-T = pd.read_csv(test_filename)
-
-y = X[label_string].values
-X = X.drop(label_string, axis=1)
-
-print("X shape: ", X.shape)
-print("y shape: ", y.shape)
-print("V shape: ", V.shape)
-print("T shape: ", T.shape)
 
 def mse_derivative(y_pred):
     return 
@@ -33,11 +18,14 @@ class Node():
 class NeuralNetwork():
     def __init__(self, input_data, label, hl_size, lr):
         self.hl_size = hl_size
-        self.data = input_data
+        self.data = np.array(input_data)
+        print("data shape: ", self.data.shape)
         self.label = label
         self.learning_rate = lr
         self.layer1 = Node(input_data.shape[0], self.hl_size)
         self.layer2 = Node(self.hl_size, 1) #One for binary classification
+        print("Layer 1 weights shape: ", self.layer1.weights.shape)
+        print("Layer 2 weights shape: ", self.layer2.weights.shape)
         
     def tanh(self, x):
         return (np.exp(x) - np.exp(-x)) / (np.exp(x) + np.exp(-x))
@@ -60,45 +48,79 @@ class NeuralNetwork():
     
     def backward(self):
         dL_da2 = 2 * (self.label - self.a2)
-        print("dL_da2: ", dL_da2)
-        dL_dz2 = dL_da2 * (self.sigmoid(self.a2) * (1 - self.sigmoid(self.a2)))
-        print("dL_dz2: ", dL_dz2)
-        dL_dw2 = dL_da2 * dL_dz2 * self.a1
-        print("dL_dw2: ", dL_dw2)
-        
+        da2_dz2 = self.a2 * (1 - self.a2)
+        dz2_dw2 =  self.a1
+        dL_dw2 = dL_da2 * da2_dz2 * dz2_dw2
         dL_dw2 = dL_dw2.reshape(1, -1)
         
-        print("dL_dw2 reshaped: ", dL_dw2.T)
+        # print("dL_dw2 shape: ", dL_dw2.shape)
         
-        print("layer 2 weights: ", self.layer2.weights)
+        # print("dL_da2 shape: ", dL_da2.shape)
+        # print("da2_dz2 shape: ", da2_dz2.shape)
         
-        self.layer2.weights -= self.learning_rate * dL_dw2.T
-        
-        dL_da1 = np.dot(self.layer2.weights.T, self.z2)
-        dL_dz1 = dL_da1 * (self.sigmoid(self.a1) * (1 - self.sigmoid(self.a2)))
-        dL_dw1 = np.dot(self.data.T, dL_dz1)
-        
-        self.layer1.weights -= self.learning_rate * dL_dw1
-        
-    
-        
+        dz2_da1 = self.layer2.weights
+        # print("dz2_da1 shape: ", dz2_da1.shape)
+        da1_dz1 = self.a1 * (1 - self.a1)  
 
+        dz1_dw1 = self.data.T
+        
+        
+        da1_dz1 = da1_dz1.reshape(-1, 1)
+        dz1_dw1 = dz1_dw1.reshape(-1, 1)
+        result = da1_dz1 * dz2_da1
+        
+        # print("da1_dz1 shape: ", da1_dz1.shape)
+        # print("dz1_dw1 shape: ", dz1_dw1.shape) 
+        # print("result shape: ", result.shape)
+        
+        dL_dw1 = np.dot(((da1_dz1 * dz2_da1) * (dL_da2 * da2_dz2)), dz1_dw1.T)
+        
+        #print("dL_dw1 shape: ", dL_dw1.shape)
+
+        update_weight_1 = self.learning_rate * dL_dw1.T
+        #print("update w1 shape: ", update_weight_1.shape)
+        self.layer2.weights -= self.learning_rate * dL_dw2.T
+        self.layer1.weights -= self.learning_rate * dL_dw1.T
+        
 
 def main():
     hidden_layer_size = 5
-    learning_rate = 0.001
+    learning_rate = 0.01
+    num_epochs = 15
     
-    #Stochastic
+    train_filename = "center_surround_train.csv"
+    validate_filename = "center_surround_valid.csv"
+    test_filename = "center_surround_test.csv"
+    label_string = "label"
+
+    X = pd.read_csv(train_filename)
+    V = pd.read_csv(validate_filename)
+    T = pd.read_csv(test_filename)
+
+    y = X[label_string].values
+    X = X.drop(label_string, axis=1)
+
+    print("X shape: ", X.shape)
+    print("y shape: ", y.shape)
+    print("V shape: ", V.shape)
+    print("T shape: ", T.shape)
+    
     nn = NeuralNetwork(X.iloc[0], y[0], hidden_layer_size, learning_rate)
-
-    result = nn.forward_pass()
     
-    loss = nn.mse(result)
-    
-    back = nn.backward()
+    #Stochastic Gradient descent
+    for i in range(num_epochs):
+        print(f"Epoch {i}: ")
+        for j in range(len(X)):  
+            input_data = X.loc[j].values
+            label = y[j]
+            
+            nn.data = input_data
+            nn.label = label
 
-    print("NN after 1 forward pass: ", result)
-    print("Loss after one pass: ", loss)
+            result = nn.forward_pass()
+            loss = nn.mse(result)
+            nn.backward()
+        print("Loss: ", loss)
     
 if __name__ == '__main__':
     main()
