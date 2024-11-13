@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
 class Node():
     def __init__(self, input_size, output_size):
@@ -54,9 +54,9 @@ class NeuralNetwork():
         # print("da2_dz2 shape: ", da2_dz2.shape)
         # print("dz2_dw2 shape: ", dz2_dw2.shape)
         
-        dL_dw2 = np.dot(dz2_dw2, (dL_da2 * da2_dz2))
+        dL_dw2 = np.dot(dz2_dw2, dL_da2 * da2_dz2)
         
-        #print("dL_dw2 shape: ", dL_dw2.shape)
+        # print("dL_dw2 shape: ", dL_dw2.shape)
         
         dz2_da1 = self.layer2.weights
         da1_dz1 = (self.a1) * (1 - self.a1)
@@ -66,6 +66,13 @@ class NeuralNetwork():
         da1_dz1 = da1_dz1.reshape(-1, 1)
         dz1_dw1 = dz1_dw1.reshape(-1, 1)
         
+        # Step by step
+        step1 = dL_da2 * da2_dz2                # Shape: (1,1)
+        step2 = np.dot(step1, dz2_da1.T)        # Shape: (1,5)
+        step3 = step2 * da1_dz1.T               # Shape: (1,5)
+        dL_dw1 = np.dot(dz1_dw1, step3)         # Shape: (2,5)
+        
+        
         # print("\ndz2_da1 shape: ", dz2_da1.shape)
         # print("da1_dz1 shape: ", da1_dz1.shape)
         # print("dz1_dw1 shape: ", dz1_dw1.shape)
@@ -73,19 +80,25 @@ class NeuralNetwork():
         
         dL_dw1 = np.dot(dz1_dw1, (dL_da2 * da2_dz2 * dz2_da1 * da1_dz1).T)
         
-        #print("dL_dw1 shape: ", dL_dw1.shape)
+        # print("dL_dw1 shape: ", dL_dw1.shape)
         
         self.layer1.weights -= self.learning_rate * dL_dw1
         self.layer2.weights -= self.learning_rate * dL_dw2
         
+    def validate(self, y_true, y_pred):
+        accuracy = accuracy_score(y_true, y_pred)
+        precision = precision_score(y_true, y_pred)
+        recall = recall_score(y_true, y_pred)
+        f1 = f1_score(y_true, y_pred)
         
-        
+        return accuracy, precision, recall, f1
 
 def main():
     hidden_layer_size = 5
-    learning_rate = 0.01
-    num_epochs = 5
+    learning_rate = 0.001
+    num_epochs = 150
     np.random.seed(11)
+    y_preds = []
     
     train_filename = "center_surround_train.csv"
     validate_filename = "center_surround_valid.csv"
@@ -93,11 +106,15 @@ def main():
     label_string = "label"
 
     X = pd.read_csv(train_filename)
+    X_valid = pd.read_csv(validate_filename)
     V = pd.read_csv(validate_filename)
     T = pd.read_csv(test_filename)
 
     y = X[label_string].values
     X = X.drop(label_string, axis=1)
+    
+    y_valid = X_valid[label_string].values
+    X_valid = X_valid.drop(label_string, axis=1)
 
     print("X shape: ", X.shape)
     print("y shape: ", y.shape)
@@ -105,6 +122,9 @@ def main():
     print("T shape: ", T.shape)
     
     nn = NeuralNetwork(X.iloc[0], hidden_layer_size, learning_rate)
+    # result = nn.forward_pass()
+    # loss = nn.mse(y[0], result)
+    # nn.backward(y[0])
     
     #Stochastic Gradient descent
     for i in range(num_epochs):
@@ -120,10 +140,31 @@ def main():
             loss = nn.mse(y[j], result)
             nn.backward(y[j])
             
-            if j % 20 == 0:
-                print("Loss: ", loss)
+        print(f"Loss after Epoch {i}: {loss}")
                 
     print("Final Loss: ", loss)
+    
+    #Evaulate model
+    for j in range(len(X_valid)):
+        input_data = X_valid.iloc[j].values
+        nn.data = input_data
+        
+        y_pred = nn.forward_pass()
+        
+        if y_pred >= 0.5:
+            y_preds.append(1)
+        elif y_pred < 0.5:
+            y_preds.append(0)
+
+
+    accuracy, precision, recall, f1 = nn.validate(y_valid, y_preds)
+    
+    print("EVALUATION METRICS: \n")
+    print("accuracy: ", accuracy)
+    print("precision: ", precision)
+    print("recall: ", recall)
+    print("f1: ", f1)
+        
     
 if __name__ == '__main__':
     main()
