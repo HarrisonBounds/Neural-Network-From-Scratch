@@ -46,6 +46,7 @@ class NeuralNetwork():
         da2_dz2 = (self.a2) * (1 - self.a2)
         dz2_dw2 =  self.a1
         
+        
         dL_da2 = dL_da2.reshape(-1, 1)
         da2_dz2 = da2_dz2.reshape(-1, 1)
         dz2_dw2 = dz2_dw2.reshape(-1, 1)
@@ -95,8 +96,8 @@ class NeuralNetwork():
 
 def main():
     hidden_layer_size = 5
-    learning_rate = 0.001
-    num_epochs = 150
+    learning_rate = 0.01
+    num_epochs = 100
     np.random.seed(11)
     y_preds = []
     
@@ -122,48 +123,48 @@ def main():
     print("T shape: ", T.shape)
     
     nn = NeuralNetwork(X.iloc[0], hidden_layer_size, learning_rate)
-    # result = nn.forward_pass()
-    # loss = nn.mse(y[0], result)
-    # nn.backward(y[0])
+    result = nn.forward_pass()
+    loss = nn.mse(y[0], result)
+    nn.backward(y[0])
     
     #Stochastic Gradient descent
-    for i in range(num_epochs):
-        print(f"Epoch {i}: ")
-        for j in range(len(X)):  
-            input_data = X.loc[j].values
-            label = y[j]
+    # for i in range(num_epochs):
+    #     print(f"Epoch {i}: ")
+    #     for j in range(len(X)):  
+    #         input_data = X.loc[j].values
+    #         label = y[j]
             
-            nn.data = input_data
-            nn.label = label
+    #         nn.data = input_data
+    #         nn.label = label
 
-            result = nn.forward_pass()
-            loss = nn.mse(y[j], result)
-            nn.backward(y[j])
+    #         result = nn.forward_pass()
+    #         loss = nn.mse(y[j], result)
+    #         nn.backward(y[j])
             
-        print(f"Loss after Epoch {i}: {loss}")
+    #     print(f"Loss after Epoch {i}: {loss}")
                 
-    print("Final Loss: ", loss)
+    # print("Final Loss: ", loss)
     
-    #Evaulate model
-    for j in range(len(X_valid)):
-        input_data = X_valid.iloc[j].values
-        nn.data = input_data
+    # #Evaulate model
+    # for j in range(len(X_valid)):
+    #     input_data = X_valid.iloc[j].values
+    #     nn.data = input_data
         
-        y_pred = nn.forward_pass()
+    #     y_pred = nn.forward_pass()
         
-        if y_pred >= 0.5:
-            y_preds.append(1)
-        elif y_pred < 0.5:
-            y_preds.append(0)
+    #     if y_pred >= 0.5:
+    #         y_preds.append(1)
+    #     elif y_pred < 0.5:
+    #         y_preds.append(0)
 
 
-    accuracy, precision, recall, f1 = nn.validate(y_valid, y_preds)
+    # accuracy, precision, recall, f1 = nn.validate(y_valid, y_preds)
     
-    print("EVALUATION METRICS: \n")
-    print("accuracy: ", accuracy)
-    print("precision: ", precision)
-    print("recall: ", recall)
-    print("f1: ", f1)
+    # print("EVALUATION METRICS: \n")
+    # print("accuracy: ", accuracy)
+    # print("precision: ", precision)
+    # print("recall: ", recall)
+    # print("f1: ", f1)
         
     
 if __name__ == '__main__':
