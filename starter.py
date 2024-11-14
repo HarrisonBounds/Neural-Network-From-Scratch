@@ -1,14 +1,14 @@
 import pandas as pd
 import numpy as np
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+
 
 class Node():
     def __init__(self, input_size, output_size):
         self.weights = np.random.randn(input_size, output_size)
-        #self.biases = np.zeros(output_size)
+        self.biases = np.zeros((1, output_size))
         
     def forward(self, inputs):
-        return np.dot(inputs, self.weights) #+ self.biases
+        return np.dot(inputs, self.weights) + self.biases
         
         
 class NeuralNetwork():
@@ -51,6 +51,9 @@ class NeuralNetwork():
         da2_dz2 = da2_dz2.reshape(-1, 1)
         dz2_dw2 = dz2_dw2.reshape(-1, 1)
         
+        dL_dz2 = dL_da2 * da2_dz2
+        dL_db2 = dL_dz2
+        
         # print("dL_da2 shape: ", dL_da2.shape)
         # print("da2_dz2 shape: ", da2_dz2.shape)
         # print("dz2_dw2 shape: ", dz2_dw2.shape)
@@ -67,39 +70,30 @@ class NeuralNetwork():
         da1_dz1 = da1_dz1.reshape(-1, 1)
         dz1_dw1 = dz1_dw1.reshape(-1, 1)
         
-        # Step by step
-        step1 = dL_da2 * da2_dz2                # Shape: (1,1)
-        step2 = np.dot(step1, dz2_da1.T)        # Shape: (1,5)
-        step3 = step2 * da1_dz1.T               # Shape: (1,5)
-        dL_dw1 = np.dot(dz1_dw1, step3)         # Shape: (2,5)
-        
-        
         # print("\ndz2_da1 shape: ", dz2_da1.shape)
         # print("da1_dz1 shape: ", da1_dz1.shape)
         # print("dz1_dw1 shape: ", dz1_dw1.shape)
         
-        
         dL_dw1 = np.dot(dz1_dw1, (dL_da2 * da2_dz2 * dz2_da1 * da1_dz1).T)
+        
+        dL_db1 = np.dot(dL_dz2, (dz2_da1 * da1_dz1).T)
         
         # print("dL_dw1 shape: ", dL_dw1.shape)
         
         self.layer1.weights -= self.learning_rate * dL_dw1
         self.layer2.weights -= self.learning_rate * dL_dw2
         
-    def validate(self, y_true, y_pred):
-        accuracy = accuracy_score(y_true, y_pred)
-        precision = precision_score(y_true, y_pred)
-        recall = recall_score(y_true, y_pred)
-        f1 = f1_score(y_true, y_pred)
-        
-        return accuracy, precision, recall, f1
+        self.layer2.biases -= self.learning_rate * dL_db2
+        self.layer1.biases -= self.learning_rate * dL_db1
 
 def main():
     hidden_layer_size = 5
     learning_rate = 0.01
-    num_epochs = 100
-    np.random.seed(11)
+    num_epochs = 1000
+    #np.random.seed(11)
     y_preds = []
+    correct = 0
+    total = 0
     
     train_filename = "center_surround_train.csv"
     validate_filename = "center_surround_valid.csv"
@@ -123,48 +117,46 @@ def main():
     print("T shape: ", T.shape)
     
     nn = NeuralNetwork(X.iloc[0], hidden_layer_size, learning_rate)
-    result = nn.forward_pass()
-    loss = nn.mse(y[0], result)
-    nn.backward(y[0])
+    # result = nn.forward_pass()
+    # loss = nn.mse(y[0], result)
+    # nn.backward(y[0])
     
     #Stochastic Gradient descent
-    # for i in range(num_epochs):
-    #     print(f"Epoch {i}: ")
-    #     for j in range(len(X)):  
-    #         input_data = X.loc[j].values
-    #         label = y[j]
+    for i in range(num_epochs):
+        print(f"Epoch {i}==================================================")
+        for j in range(len(X)):  
+            input_data = X.loc[j].values
+            label = y[j]
             
-    #         nn.data = input_data
-    #         nn.label = label
+            nn.data = input_data
+            nn.label = label
 
-    #         result = nn.forward_pass()
-    #         loss = nn.mse(y[j], result)
-    #         nn.backward(y[j])
+            result = nn.forward_pass()
+            loss = nn.mse(y[j], result)
+            nn.backward(y[j])
             
-    #     print(f"Loss after Epoch {i}: {loss}")
-                
-    # print("Final Loss: ", loss)
+        print(f"Loss: {loss}")
     
-    # #Evaulate model
-    # for j in range(len(X_valid)):
-    #     input_data = X_valid.iloc[j].values
-    #     nn.data = input_data
+    #Evaulate model
+    for j in range(len(X_valid)):
+        input_data = X_valid.iloc[j].values
+        nn.data = input_data
         
-    #     y_pred = nn.forward_pass()
+        y_pred = nn.forward_pass()
         
-    #     if y_pred >= 0.5:
-    #         y_preds.append(1)
-    #     elif y_pred < 0.5:
-    #         y_preds.append(0)
-
-
-    # accuracy, precision, recall, f1 = nn.validate(y_valid, y_preds)
+        if y_pred >= 0.5:
+            y_pred = 1
+        elif y_pred < 0.5:
+            y_pred = 0
+            
+        if y_pred == y[j]:
+            correct += 1
+            
+        total += 1
+        
+    accuracy = correct / total
     
-    # print("EVALUATION METRICS: \n")
-    # print("accuracy: ", accuracy)
-    # print("precision: ", precision)
-    # print("recall: ", recall)
-    # print("f1: ", f1)
+    print(f"Accuracy: ", accuracy)
         
     
 if __name__ == '__main__':
