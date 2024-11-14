@@ -1,3 +1,5 @@
+# Multi Class Cross Entropy
+
 import torch.nn as nn
 import torch
 import pandas as pd
@@ -8,21 +10,21 @@ class NeuralNet(nn.Module):
         self.linear1 = nn.Linear(input_size, hl_size)
         self.sigmoid1 = nn.Sigmoid()
         self.linear2 = nn.Linear(hl_size, output_size)
-        self.sigmoid2 = nn.Sigmoid()
+        self.softmax2 = nn.Softmax()
         
     def forward(self, x):
         x = self.linear1(x)
         x = self.sigmoid1(x)
         x = self.linear2(x)
-        x = self.sigmoid2(x)
+        x = self.softmax2(x)
         return x
     
 
 #Hyperparameters 
 lr = 0.01
 num_epochs = 500
-hl_size = 5
-outut_size = 1 #2 for multi-class cross entropy, 1 for MSE
+hl_size = 2
+outut_size = 2 #2 for multi-class cross entropy, 1 for MSE
 label = "label"
 
 #Alternatively, you could make a custom Dataloader class... didn't feel like it though
@@ -43,15 +45,15 @@ X_valid = X_valid.drop(label, axis=1).values
 
 #Convert to tensors for numpy to use
 X_train = torch.tensor(X_train, dtype=torch.float32)
-y_train = torch.tensor(y_train, dtype=torch.float32)
+y_train = torch.tensor(y_train, dtype=torch.long)
 X_test = torch.tensor(X_test, dtype=torch.float32)
-y_test = torch.tensor(y_test, dtype=torch.float32)
+y_test = torch.tensor(y_test, dtype=torch.long)
 X_valid = torch.tensor(X_valid, dtype=torch.float32)
-y_valid = torch.tensor(y_valid, dtype=torch.float32)
+y_valid = torch.tensor(y_valid, dtype=torch.long)
 
 #Build Network
 ff = NeuralNet(X_train.shape[1], hl_size, outut_size)
-loss_func = nn.MSELoss()
+loss_func = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(ff.parameters(), lr=lr)
 
 #Use Stochastic Gradient Descent (only use one data example at a time)
@@ -83,13 +85,13 @@ with torch.no_grad():
         x = X_valid[i]
         y = y_valid[i]
         
-        pred = ff(x)
+        pred = ff(x)[0] #First probability in output. 
         
         #Clipping for MSE
         if pred >= 0.5:
-            pred = 1
-        elif pred < 0.5:
             pred = 0
+        elif pred < 0.5:
+            pred = 1
         
         if pred == y:
             correct += 1
