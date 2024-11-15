@@ -41,8 +41,8 @@ class NeuralNetwork():
         self.a2 = self.sigmoid(self.z2)
         return self.a2
     
-    def backward(self, label):
-        dL_da2 = 2 * (self.a2 - label)
+    def backward(self, y_true):
+        dL_da2 = -2 * (self.a2 - y_true)
         da2_dz2 = (self.a2) * (1 - self.a2)
         dz2_dw2 =  self.a1
         
@@ -149,7 +149,7 @@ def main():
         elif y_pred < 0.5:
             y_pred = 0
             
-        if y_pred == y[j]:
+        if y_pred == y_valid[j]:
             correct += 1
             
         total += 1
