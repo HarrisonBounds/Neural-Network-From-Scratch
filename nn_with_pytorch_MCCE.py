@@ -19,87 +19,102 @@ class NeuralNet(nn.Module):
         x = self.softmax2(x)
         return x
     
+    def train_model(self, model, num_epochs, X_train, y_train, loss_func, optimizer):
+        #Use Stochastic Gradient Descent (only use one data example at a time)
+        for t in range(num_epochs):
+            print(f"Epoch {t+1}\n===================================================")
+            for i in range(len(X_train)):
+                
+                x = X_train[i]
+                y = y_train[i]
+                
+                y_pred = model(x)
+                loss = loss_func(y_pred, y)
+                
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
+                
+            print(f"Loss: {loss}")
+    def validate_test(self, model, X_test, y_test, test_string):
+        #Evaluating the model
+        model.eval() #Set the model to 'evaluation' mode
 
-#Hyperparameters 
-lr = 0.01
-num_epochs = 500
-hl_size = 2
-outut_size = 2 #2 for multi-class cross entropy, 1 for MSE
-label = "label"
-
-#Alternatively, you could make a custom Dataloader class... didn't feel like it though
-#Format Data
-X_train = pd.read_csv("center_surround_train.csv")
-X_test = pd.read_csv("center_surround_test.csv")
-X_valid = pd.read_csv("center_surround_valid.csv")
-
-#Seperate labels
-y_train = X_train[label].values
-y_test = X_test[label].values
-y_valid = X_valid[label].values
-
-#Drop labels
-X_train = X_train.drop(label, axis=1).values
-X_test = X_test.drop(label, axis=1).values
-X_valid = X_valid.drop(label, axis=1).values
-
-#Convert to tensors for numpy to use
-X_train = torch.tensor(X_train, dtype=torch.float32)
-y_train = torch.tensor(y_train, dtype=torch.long)
-X_test = torch.tensor(X_test, dtype=torch.float32)
-y_test = torch.tensor(y_test, dtype=torch.long)
-X_valid = torch.tensor(X_valid, dtype=torch.float32)
-y_valid = torch.tensor(y_valid, dtype=torch.long)
-
-#Build Network
-ff = NeuralNet(X_train.shape[1], hl_size, outut_size)
-loss_func = nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(ff.parameters(), lr=lr)
-
-#Use Stochastic Gradient Descent (only use one data example at a time)
-for t in range(num_epochs):
-    print(f"Epoch {t+1}\n===================================================")
-    for i in range(len(X_train)):
-        
-        x = X_train[i]
-        y = y_train[i]
-        
-        y_pred = ff(x)
-        loss = loss_func(y_pred, y)
-        
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-        
-    print(f"Loss: {loss}")
+        #Disable gradient calculation for testing
+        with torch.no_grad():
+            correct = 0
+            total = 0
+            
+            for i in range(len(X_test)):
+                x = X_test[i]
+                y = y_test[i]
+                
+                pred = model(x)[0] #First probability in output. 
+                
+                #Clipping for MSE
+                if pred >= 0.5:
+                    pred = 0
+                elif pred < 0.5:
+                    pred = 1
+                
+                if pred == y:
+                    correct += 1
+                
+                total += 1
+            
+        accuracy = correct / total
+        if test_string == "test":
+            print(f"Accuracy on the test set: {accuracy}")
+        else:
+            print(f"Accuracy on the validation set: {accuracy}")
     
-#Evaluating the model
-ff.eval() #Set the model to 'evaluation' mode
+def main():
+    #Hyperparameters 
+    lr = 0.01
+    num_epochs = 500
+    hl_size = 5
+    outut_size = 2 #2 for multi-class cross entropy, 1 for MSE
+    label = "label"
 
-#Disable gradient calculation for testing
-with torch.no_grad():
-    correct = 0
-    total = 0
+    #Alternatively, you could make a custom Dataloader class... didn't feel like it though
+    #Format Data
+    X_train = pd.read_csv("center_surround_train.csv")
+    X_test = pd.read_csv("center_surround_test.csv")
+    X_valid = pd.read_csv("center_surround_valid.csv")
+
+    #Seperate labels
+    y_train = X_train[label].values
+    y_test = X_test[label].values
+    y_valid = X_valid[label].values
+
+    #Drop labels
+    X_train = X_train.drop(label, axis=1).values
+    X_test = X_test.drop(label, axis=1).values
+    X_valid = X_valid.drop(label, axis=1).values
+
+    #Convert to tensors for numpy to use
+    X_train = torch.tensor(X_train, dtype=torch.float32)
+    y_train = torch.tensor(y_train, dtype=torch.long)
+    X_test = torch.tensor(X_test, dtype=torch.float32)
+    y_test = torch.tensor(y_test, dtype=torch.long)
+    X_valid = torch.tensor(X_valid, dtype=torch.float32)
+    y_valid = torch.tensor(y_valid, dtype=torch.long)
+
+    #Build Network
+    ff = NeuralNet(X_train.shape[1], hl_size, outut_size)
+    loss_func = nn.CrossEntropyLoss()
+    optimizer = torch.optim.Adam(ff.parameters(), lr=lr)
     
-    for i in range(len(X_valid)):
-        x = X_valid[i]
-        y = y_valid[i]
+    ff.train_model(ff, num_epochs, X_train, y_train, loss_func, optimizer)
+    ff.validate_test(ff, X_valid, y_valid, 'validate')
+    ff.validate_test(ff, X_test, y_test, 'test')
+    
+if __name__ == '__main__':
+    main()
+
+    
         
-        pred = ff(x)[0] #First probability in output. 
-        
-        #Clipping for MSE
-        if pred >= 0.5:
-            pred = 0
-        elif pred < 0.5:
-            pred = 1
-        
-        if pred == y:
-            correct += 1
-        
-        total += 1
-        
-accuracy = correct / total
-print(f"Accuracy on the validation set: {accuracy}")        
+            
 
     
 
