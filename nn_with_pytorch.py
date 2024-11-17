@@ -3,9 +3,19 @@
 import torch.nn as nn
 import torch
 import pandas as pd
+from torch import Tensor
+from torch.optim import Optimizer
+from typing import Callable
 
 class NeuralNet(nn.Module):
-    def __init__(self, input_size, hl_size, output_size):
+    def __init__(self, input_size: int, hl_size: int, output_size: int):
+        """Initialize the network with the size of each layer
+
+        Args:
+            input_size (int): Number of features in the dataset
+            hl_size (int): hidden layer size
+            output_size (int): output size (1 for MSE loss, 2 for MCE loss)
+        """
         super(NeuralNet, self).__init__()
         self.linear1 = nn.Linear(input_size, hl_size)
         self.sigmoid1 = nn.Sigmoid()
@@ -15,15 +25,32 @@ class NeuralNet(nn.Module):
         elif output_size == 1:
             self.output = nn.Sigmoid()
         
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
+        """Forward pass for the neural network
+
+        Args:
+            x (Tensor): Input data in the form of a tensor
+
+        Returns:
+            Tensor: data after the nework has processed it (output tensor)
+        """
         x = self.linear1(x)
         x = self.sigmoid1(x)
         x = self.linear2(x)
         x = self.output(x)
         return x
     
-    def train_model(self, model, num_epochs, X_train, y_train, loss_func, optimizer):
-        #Use Stochastic Gradient Descent (only use one data example at a time)
+    def train_model(self, model: nn.Module, num_epochs: int, X_train: Tensor, y_train: Tensor, loss_func: Callable, optimizer: Optimizer):
+        """Use Stochastic Gradient Descent to train one example at a time
+
+        Args:
+            model (nn.Module): Model created by the forward pass
+            num_epochs (int): Number of times to train the entire dataset
+            X_train (Tensor): Training data without labels
+            y_train (Tensor): Labels for the training data
+            loss_func (Callable): callable function to perform the loss calculation on the output
+            optimizer (Optimizer): Built in optimzer to perform momentum based learning
+        """
         for t in range(num_epochs):
             print(f"Epoch {t+1}\n===================================================")
             for i in range(len(X_train)):
@@ -39,7 +66,19 @@ class NeuralNet(nn.Module):
                 optimizer.step()
                 
             print(f"Loss: {loss}")
-    def validate_test(self, model, X_test, y_test, loss_func_label):
+            
+    def validate_test(self, model: nn.Module, X_test: Tensor, y_test: Tensor, loss_func_label: str) -> float:
+        """Test the validation and test set accuracies by divinding the correct predictions by the total predicitions
+
+        Args:
+            model (nn.Module): Model created by the forward pass
+            X_test (Tensor): Testing/Validation data without labels
+            y_test (Tensor): Labels for the testing/validation data
+            loss_func_label (str): Specifies either MSE or MCE loss
+
+        Returns:
+            float: accuracy evaluation metric to see how well the network is performing
+        """
         model.eval() #Set the model to 'evaluation' mode
 
         #Disable gradient calculation for testing
