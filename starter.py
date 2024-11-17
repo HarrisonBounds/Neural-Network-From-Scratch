@@ -46,13 +46,9 @@ class NeuralNetwork():
         da2_dz2 = (self.a2) * (1 - self.a2)
         dz2_dw2 =  self.a1
         
-        
         dL_da2 = dL_da2.reshape(-1, 1)
         da2_dz2 = da2_dz2.reshape(-1, 1)
         dz2_dw2 = dz2_dw2.reshape(-1, 1)
-        
-        dL_dz2 = dL_da2 * da2_dz2
-        dL_db2 = dL_dz2
         
         # print("dL_da2 shape: ", dL_da2.shape)
         # print("da2_dz2 shape: ", da2_dz2.shape)
@@ -76,15 +72,11 @@ class NeuralNetwork():
         
         dL_dw1 = np.dot(dz1_dw1, (dL_da2 * da2_dz2 * dz2_da1 * da1_dz1).T)
         
-        dL_db1 = np.dot(dL_dz2, (dz2_da1 * da1_dz1).T)
-        
         # print("dL_dw1 shape: ", dL_dw1.shape)
         
         self.layer1.weights -= self.learning_rate * dL_dw1
         self.layer2.weights -= self.learning_rate * dL_dw2
-        
-        self.layer2.biases -= self.learning_rate * dL_db2
-        self.layer1.biases -= self.learning_rate * dL_db1
+    
 
 def main():
     hidden_layer_size = 5
