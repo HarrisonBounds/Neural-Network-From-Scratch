@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
-import sympy as sym
+from autograd import grad, jacobian
+import autograd.numpy as anp
 
 
 class Node():
@@ -87,65 +88,111 @@ class NeuralNetwork():
         self.layer1.biases -= self.learning_rate * dL_db1
 
 
-class Node2():
-    def __init__(self, input, next_layer):
-        self.value = input
-        self.weights = np.random.randn(1, next_layer)
-        self.bias = np.random.randn((1, next_layer))
-
-
-class NN2():
-    def __init__(self, input, hidden_layer_width, output_layer_size, learning_rate):
-        self.input_nodes = []
-        self.hidden_layer = []
-        self.output_layer = np.zeros(output_layer_size)
+class NN():
+    def __init__(self, layers, learning_rate, weights=0):
+        self.weights = []
         self.learning_rate = learning_rate
-        for i in input:
-            self.input_nodes.append(Node2(i, hidden_layer_width))
-        for i in range(hidden_layer_width):
-            self.hidden_layer.append(Node2(0, output_layer_size))
-        self.hidden_layer_width = hidden_layer_width
-        self.output_layer_size = output_layer_size
+        self.num_hidden_layers = len(layers) - 2
+        self.x = [0]*layers[0]
+        self.q = [[0]*layers[i+1]
+                  for i in range(self.num_hidden_layers)]
+        self.h = [[0]*layers[i+1]
+                  for i in range(self.num_hidden_layers)]
+        self.z = [0]*layers[-1]
+        self.p = [0]*layers[-1]
+
+        if weights == 0:
+            for i in range(len(layers) - 1):
+                input = layers[i]
+                output = layers[i+1]
+
+                weight = anp.random.randn(input+1, output)
+                self.weights.append(weight)
+        else:
+            self.weights = weights
+
+        self.params = [self.weights[:-1], self.weights[-1]]
 
     def sigmoid(self, x):
-        return 1/(1+np.exp(-x))
+        return 1/(1+anp.exp(-x))
 
-    def softmax(self, z_layer, index):
-        e_zc = 0.0
-        for zc in z_layer:
-            e_zc += np.exp(zc)
+    def softmax(self, z):
+        return anp.exp(z)/anp.sum(anp.exp(z))
 
-        return z_layer[index]/e_zc
+    def loss(self, p, y):
+        return -anp.sum(y*anp.log(p) + (anp.ones_like(y)-y)*anp.log(anp.ones_like(p)-p))
 
-    def feed_forward(self):
-        for i in range(self.hidden_layer_width):
-            q = np.dot([input.value for input in self.input_nodes], [
-                       node.weights[i] for node in self.input_nodes])
-            h = self.sigmoid(q)
-            self.hidden_layer[i].value = h
+    def linear_transform(self, x, w):
+        return w[0] + anp.dot(x.T, w[1:])
 
-        z_vals = []
-        for i in range(self.output_layer_size):
-            z = np.dot([hidden.value for hidden in self.hidden_layer], [
-                       node.weights[i] for node in self.hidden_layer])
-            z_vals.append(z)
+    def ft(self, x, w):
+        for i in range(len(w)):
+            x = self.linear_transform(x, w[i])
+            self.q[i] = x
 
-        for i in range(len(z_vals)):
-            self.output_layer[i] = self.softmax(z_vals, i)
+            x = self.sigmoid(x).T
+            self.h[i] = x
 
-    def back_propogation(self):
-        pass
+        return x
+
+    def model(self, x, params):
+        self.x = x
+        f = self.ft(x, params[0])
+
+        z = self.linear_transform(f, params[1])
+        self.z = z
+
+        p = self.softmax(z)
+        self.p = p
+
+        return p.T
+
+    def back_propagation(self, x, y):
+        grad_L = grad(self.loss)
+        grad_sig = jacobian(self.sigmoid)
+        grad_soft = jacobian(self.softmax)
+
+        dLdp = grad_L(self.p, y)
+        dpdz = grad_soft(self.z).diagonal()
+        dzdw = self.h[0]
+        dhdq = grad_sig(anp.array(self.q[0])).diagonal()
+        dqdw = self.x
+        dzdh = self.weights[-1]
+        print(dzdw)
+        print(dpdz)
+        print(dLdp)
+        print(dhdq)
+
+        gradients = []
+        w = self.weights[-1]
+        print(len(w), len(w[0]))
+        grads = np.empty((len(w), len(w[0])))
+        for i in range(len(w)):
+            for j in range(len(w[0])):
+                if i == 0:
+                    grads[i][j] = dLdp[j]*dpdz[j]*1
+                else:
+                    grads[i][j] = dLdp[j]*dpdz[j]*dzdw[i-1]
+
+        gradients.append(grads)
+
+        w = self.weights[0]
+        grads = np.empty((len(w), len(w[0])))
+        for i in range(len(w)):
+            for j in range(len(w[0])):
+                if i == 0:
+                    grads[i][j] = np.sum(dhdq[j]*1*(dzdh[j+1]*dpdz*dLdp))
+                else:
+                    grads[i][j] = np.sum(
+                        dhdq[j]*dqdw[i-1]*(dzdh[j+1]*dpdz*dLdp))
+
+        gradients.append(grads)
+        gradients.reverse()
+
+        return gradients
 
 
 def main():
-    # hidden_layer_size = 5
-    # learning_rate = 0.01
-    # num_epochs = 1000
-    # # np.random.seed(11)
-    # y_preds = []
-    # correct = 0
-    # total = 0
-
     train_filename = "center_surround_train.csv"
     validate_filename = "center_surround_valid.csv"
     test_filename = "center_surround_test.csv"
@@ -161,54 +208,6 @@ def main():
 
     y_valid = X_valid[label_string].values
     X_valid = X_valid.drop(label_string, axis=1)
-
-    # print("X shape: ", X.shape)
-    # print("y shape: ", y.shape)
-    # print("V shape: ", V.shape)
-    # print("T shape: ", T.shape)
-
-    # nn = NeuralNetwork(X.iloc[0], hidden_layer_size, learning_rate)
-    # # result = nn.forward_pass()
-    # # loss = nn.mse(y[0], result)
-    # # nn.backward(y[0])
-
-    # # Stochastic Gradient descent
-    # for i in range(num_epochs):
-    #     print(f"Epoch {i}==================================================")
-    #     for j in range(len(X)):
-    #         input_data = X.loc[j].values
-    #         label = y[j]
-
-    #         nn.data = input_data
-    #         nn.label = label
-
-    #         result = nn.forward_pass()
-    #         loss = nn.mse(y[j], result)
-    #         nn.backward(y[j])
-
-    #     print(f"Loss: {loss}")
-
-    # # Evaulate model
-    # for j in range(len(X_valid)):
-    #     input_data = X_valid.iloc[j].values
-    #     nn.data = input_data
-
-    #     y_pred = nn.forward_pass()
-
-    #     if y_pred >= 0.5:
-    #         y_pred = 1
-    #     elif y_pred < 0.5:
-    #         y_pred = 0
-
-    #     if y_pred == y_valid[j]:
-    #         correct += 1
-
-    #     total += 1
-
-    # accuracy = correct / total
-
-    # print(f"Accuracy: ", accuracy)
-    NN = NN2(X.iloc)
 
 
 if __name__ == '__main__':
