@@ -236,12 +236,13 @@ class NeuralNetEvaluator:
         y_test = X_test["label"].values
         print(f'Drawing Decision Region')
         fig, ax = plt.subplots()
+        k = self.best_models[dataset_loss].hl_size
         plot_decision_regions(
             features=X_test.drop("label", axis=1).values,
             targets=y_test,
             model=self.best_models[dataset_loss],
             axis=ax,
-            title=f"{dataset_name} Decision Regions"
+            title=f"{dataset_loss} (k={k}) Decision Regions"
         )
         plt.savefig(
             f"plots/{dataset_name}_{loss_func_name}_decision_regions.png"

@@ -19,6 +19,9 @@ class NeuralNet(nn.Module):
             regularizer (str, optional): Regularization term [norm, orthogonal]. Defaults to None.
         """
         super(NeuralNet, self).__init__()
+        self.input_size = input_size
+        self.hl_size = hl_size
+        self.output_size = output_size
         self.linear1 = nn.Linear(input_size, hl_size)
         self.sigmoid1 = nn.Sigmoid()
         self.linear2 = nn.Linear(hl_size, output_size)
