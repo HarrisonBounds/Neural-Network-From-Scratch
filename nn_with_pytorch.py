@@ -41,7 +41,7 @@ class NeuralNet(nn.Module):
         x = self.output(x)
         return x
 
-    def train_model(self, model: nn.Module, num_epochs: int, X_train: Tensor, y_train: Tensor, loss_func: Callable, optimizer: Optimizer):
+    def train_model(self, model: nn.Module, num_epochs: int, X_train: Tensor, y_train: Tensor, X_valid: Tensor, y_valid: Tensor, loss_func: Callable, optimizer: Optimizer) -> list:
         """Use Stochastic Gradient Descent to train one example at a time
 
         Args:
@@ -49,12 +49,16 @@ class NeuralNet(nn.Module):
             num_epochs (int): Number of times to train the entire dataset
             X_train (Tensor): Training data without labels
             y_train (Tensor): Labels for the training data
+            X_valid (Tensor): Validation data without labels
+            y_valid (Tensor): Labels for the validation data
             loss_func (Callable): callable function to perform the loss calculation on the output
             optimizer (Optimizer): Built in optimzer to perform momentum based learning
         """
-        learning_curve = []
+        training_learning_curve = []
+        validation_learning_curve = []
         for epoch in range(num_epochs):
-            epoch_loss = 0
+            model.train()
+            training_loss = 0
             for i in range(len(X_train)):
 
                 x = X_train[i]
@@ -68,10 +72,25 @@ class NeuralNet(nn.Module):
                 optimizer.step()
 
                 # Accumulate loss for the epoch
-                epoch_loss += loss.item()
+                training_loss += loss.item()
             # Learning curve should be average loss per epoch
-            learning_curve.append(epoch_loss / len(X_train))
-        return learning_curve
+            training_learning_curve.append(training_loss / len(X_train))
+            # Validation Phase
+            model.eval()
+            with torch.no_grad():
+                validation_loss = 0
+                for i in range(len(X_valid)):
+                    x_valid = X_valid[i]
+                    y_val = y_valid[i]
+
+                    y_valid_pred = model(x_valid)
+                    loss = loss_func(y_valid_pred, y_val)
+                    validation_loss += loss.item()
+                # Learning curve should be average loss per epoch
+                validation_learning_curve.append(
+                    validation_loss / len(X_valid))
+
+        return training_learning_curve, validation_learning_curve
 
     def validate_test(self, model: nn.Module, X_test: Tensor, y_test: Tensor, loss_func_label: str) -> float:
         """Test the validation and test set accuracies by divinding the correct predictions by the total predicitions
@@ -86,12 +105,10 @@ class NeuralNet(nn.Module):
             float: accuracy evaluation metric to see how well the network is performing
         """
         model.eval()  # Set the model to 'evaluation' mode
-
         # Disable gradient calculation for testing
         with torch.no_grad():
             correct = 0
             total = 0
-
             for i in range(len(X_test)):
                 x = X_test[i]
                 y = y_test[i]

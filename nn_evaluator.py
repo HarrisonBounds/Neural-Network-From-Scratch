@@ -102,11 +102,13 @@ class NeuralNetEvaluator:
             lr=hyperparams.lr
         )
         # Train the model
-        epoch_losses = neural_network.train_model(
+        training_losses, validation_losses = neural_network.train_model(
             neural_network,
             num_epochs=500,
             X_train=X_train,
             y_train=y_train,
+            X_valid=X_validation,
+            y_valid=y_validation,
             loss_func=loss_func,
             optimizer=optimizer
         )
@@ -128,7 +130,8 @@ class NeuralNetEvaluator:
         self.evaluated_models[key] = {
             "valid_accuracy": valid_accuracy,
             "test_accuracy": test_accuracy,
-            "epoch_losses": epoch_losses
+            "training_losses": training_losses,
+            "validation_losses": validation_losses
         }
         print(
             f"Finished training {dataset_name} with Hyperparams: {hyperparams}" +
@@ -178,14 +181,21 @@ class NeuralNetEvaluator:
         # find the epoch_losses for the best hyperparams
         key = (dataset_name, best_hp)
         loss = "MCE" if best_hp.output_size == 2 else "MSE"
-        epoch_losses = self.evaluated_models[key]["epoch_losses"]
+        training_losses = self.evaluated_models[key]["training_losses"]
+        validation_losses = self.evaluated_models[key]["validation_losses"]
         plt.figure()
-        plt.plot(range(len(epoch_losses)), epoch_losses,
-                 label=f"{dataset_name}_{best_hp.hl_size}_{loss}")
+        plt.plot(range(len(training_losses)), training_losses,
+                 label=f"{dataset_name}_{loss}_{best_hp.hl_size}_training_loss")
+        plt.plot(range(len(validation_losses)), validation_losses,
+                 label=f"{dataset_name}_{loss}_{best_hp.hl_size}_validation_loss")
         plt.xlabel("Epochs")
         plt.ylabel("Loss")
-        plt.title(f"{dataset_name} (k={best_hp.hl_size}) Learning Curve")
-        plt.savefig(f"{dataset_name}_{best_hp.hl_size}_learning_curve.png")
+        plt.title(f"{dataset_name} (k={best_hp.hl_size}) Learning Curves")
+        plt.legend(["Training Loss", "Validation Loss"])
+        plt.savefig(
+            f"plots/{dataset_name}_{best_hp.hl_size}_{
+                loss}_learning_curve.png"
+        )
 
     def plot_learned_decision_surface(self, dataset_name: str):
         # Plot the learned decision surface along with observations from the test set
@@ -215,6 +225,8 @@ def main():
     datasets = ["xor", "center_surround", "spiral", "two_gaussians"]
     hidden_layer_sizes = [2, 3, 5, 7, 9]
     losses = ["MCE", "MSE"]
+    # After running and manually inspecting the results,
+    # these are the best HPs for each dataset and loss function
     best_hps_map = {
         "xor_MCE": HyperParams(7, 0.01, "MCE"),
         "xor_MSE": HyperParams(9, 0.01, "MSE"),
@@ -230,6 +242,7 @@ def main():
             dataset_loss = f"{dataset}_{loss}"
             hp = best_hps_map[dataset_loss]
             evaluator.train_model(dataset, loss, hp)
+    # Uncomment this block to train models with different hyperparams
     # for dataset in tqdm(datasets, desc="Datasets"):
     #     for hl_size in hidden_layer_sizes:
     #         for loss in losses:
