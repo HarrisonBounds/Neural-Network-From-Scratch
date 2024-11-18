@@ -168,6 +168,9 @@ def plot_decision_regions(
         grid = transform(grid)
 
     # generate predictions over grid
+    # Cast grid to a tensor if model is a PyTorch model
+    if isinstance(model, nn.Module):
+        grid = torch.tensor(grid).to(dtype=torch.float32)
     yhat = model.predict(grid)
 
     # reshape the predictions back into a grid

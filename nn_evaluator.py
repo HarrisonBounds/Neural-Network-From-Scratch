@@ -6,6 +6,7 @@ from torch.optim import Optimizer
 from typing import Callable, Tuple
 from tqdm import tqdm
 import matplotlib.pyplot as plt
+import os
 
 from nn_with_pytorch import NeuralNet
 from plotter import plot_data, plot_decision_surface, plot_decision_regions
@@ -226,14 +227,24 @@ class NeuralNetEvaluator:
 
     def plot_learned_decision_surfaces(self, dataset_name: str, loss_func_name: str):
         # Plot the learned decision surface along with observations from the test set
+        if loss_func_name == "MCE":
+            print(f"Cannot plot decision surface for MCE loss function")
+            return
         dataset_loss = f"{dataset_name}_{loss_func_name}"
         # plot_decision_surface(model=self.best_models[dataset_loss])
         X_test = pd.read_csv(self.test_data[dataset_name])
         y_test = X_test["label"].values
+        print(f'Drawing Decision Region')
+        fig, ax = plt.subplots()
         plot_decision_regions(
             features=X_test.drop("label", axis=1).values,
             targets=y_test,
-            model=self.best_models[dataset_loss]
+            model=self.best_models[dataset_loss],
+            axis=ax,
+            title=f"{dataset_name} Decision Regions"
+        )
+        plt.savefig(
+            f"plots/{dataset_name}_{loss_func_name}_decision_regions.png"
         )
 
 
@@ -259,7 +270,7 @@ def main():
     )
     datasets = ["xor", "center_surround", "spiral", "two_gaussians"]
     hidden_layer_sizes = [2, 3, 5, 7, 9]
-    losses = ["MCE", "MSE"]
+    losses = ["MSE", "MCE"]
     regularizers = ["", "norm", "orthogonal"]
     # After running and manually inspecting the results,
     # these are the best HPs for each dataset and loss function
@@ -293,13 +304,16 @@ def main():
                     dataset, loss_name
                 )
                 print("======================================")
-                print(f"Best Hyperparams for {dataset}: {best_hp} Reg={reg}")
+                print(
+                    f"Best Hyperparams for {dataset}: 
+                        {best_hp} Reg={"None" if reg == '' else reg}"
+                )
                 print(f"Validation Accuracy: {valid_acc}")
                 print(f"Test Accuracy: {test_acc}")
                 print("======================================\n")
-                evaluator.plot_learning_curves(dataset, best_hp)
-                # evaluator.plot_learned_decision_surfaces(dataset, loss_name)
-
+                # evaluator.plot_learning_curves(dataset, best_hp)
+                evaluator.plot_learned_decision_surfaces(dataset, loss_name)
+    print(f"============ Finished training and evaluating models ============")
 
 if __name__ == '__main__':
     main()
