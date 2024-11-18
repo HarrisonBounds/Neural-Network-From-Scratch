@@ -262,3 +262,27 @@ Best Hyperparams for two_gaussians: [HLSize: 2, LR: 0.01, Loss: MCE]
 Validation Accuracy: 0.98
 Test Accuracy: 0.91
 ======================================
+
+======================================
+Best Hyperparams for xor: [HLSize: 9, LR: 0.01, Loss: MSE]
+Validation Accuracy: 0.955
+Test Accuracy: 0.95
+======================================
+
+======================================
+Best Hyperparams for center_surround: [HLSize: 3, LR: 0.01, Loss: MSE]
+Validation Accuracy: 0.965
+Test Accuracy: 0.725
+======================================
+
+======================================
+Best Hyperparams for spiral: [HLSize: 9, LR: 0.01, Loss: MSE]
+Validation Accuracy: 0.99
+Test Accuracy: 0.995
+======================================
+
+======================================
+Best Hyperparams for two_gaussians: [HLSize: 3, LR: 0.01, Loss: MSE]
+Validation Accuracy: 0.98
+Test Accuracy: 0.91
+======================================

@@ -7,6 +7,7 @@ from typing import Callable, Tuple
 from tqdm import tqdm
 
 from nn_with_pytorch import NeuralNet
+from plotter import plot_data, plot_decision_surface, plot_decision_regions
 
 
 class HyperParams:
@@ -164,6 +165,15 @@ class NeuralNetEvaluator:
                 best_hyperparams = hp
         return best_hyperparams, best_valid_accuracy, best_test_accuracy
 
+    def plot_learning_curve(self, dataset_name: str):
+        # Plot the learning curve for training and validation loss as
+        # a function of training epochs
+        pass
+
+    def plot_learned_decision_surface(self, dataset_name: str):
+        # Plot the learned decision surface along with observations from the test set
+        pass
+
 
 def main():
     print(f"WARNING: This script will take a long time to run ...")
@@ -187,12 +197,11 @@ def main():
     )
     datasets = ["xor", "center_surround", "spiral", "two_gaussians"]
     hidden_layer_sizes = [2, 3, 5, 7, 9]
-    losses = ["MCE", "MSE"]
+    loss = "MSE"
     for dataset in tqdm(datasets, desc="Datasets"):
         for hl_size in hidden_layer_sizes:
-            for loss in losses:
-                hp = HyperParams(hl_size, 0.01, loss)
-                evaluator.train_model(dataset, loss, hp)
+            hp = HyperParams(hl_size, 0.01, loss)
+            evaluator.train_model(dataset, loss, hp)
     evaluator.print_evaluated_models()
     for dataset in datasets:
         best_hp, valid_acc, test_acc = evaluator.find_best_hyperparams_for_dataset(
