@@ -1,0 +1,264 @@
+Evaluated 40 models over 4 datasets
+======================================
+xor with Hyperparams: [HLSize: 2, LR: 0.01, Loss: MCE]
+Validation Accuracy: 0.605
+Test Accuracy: 0.595
+======================================
+
+======================================
+xor with Hyperparams: [HLSize: 2, LR: 0.01, Loss: MSE]
+Validation Accuracy: 0.68
+Test Accuracy: 0.7
+======================================
+
+======================================
+xor with Hyperparams: [HLSize: 3, LR: 0.01, Loss: MCE]
+Validation Accuracy: 0.655
+Test Accuracy: 0.705
+======================================
+
+======================================
+xor with Hyperparams: [HLSize: 3, LR: 0.01, Loss: MSE]
+Validation Accuracy: 0.875
+Test Accuracy: 0.9
+======================================
+
+======================================
+xor with Hyperparams: [HLSize: 5, LR: 0.01, Loss: MCE]
+Validation Accuracy: 0.72
+Test Accuracy: 0.745
+======================================
+
+======================================
+xor with Hyperparams: [HLSize: 5, LR: 0.01, Loss: MSE]
+Validation Accuracy: 0.885
+Test Accuracy: 0.9
+======================================
+
+======================================
+xor with Hyperparams: [HLSize: 7, LR: 0.01, Loss: MCE]
+Validation Accuracy: 0.98
+Test Accuracy: 0.99
+======================================
+
+======================================
+xor with Hyperparams: [HLSize: 7, LR: 0.01, Loss: MSE]
+Validation Accuracy: 0.96
+Test Accuracy: 0.98
+======================================
+
+======================================
+xor with Hyperparams: [HLSize: 9, LR: 0.01, Loss: MCE]
+Validation Accuracy: 0.72
+Test Accuracy: 0.745
+======================================
+
+======================================
+xor with Hyperparams: [HLSize: 9, LR: 0.01, Loss: MSE]
+Validation Accuracy: 0.93
+Test Accuracy: 0.95
+======================================
+
+======================================
+center_surround with Hyperparams: [HLSize: 2, LR: 0.01, Loss: MCE]
+Validation Accuracy: 0.865
+Test Accuracy: 0.705
+======================================
+
+======================================
+center_surround with Hyperparams: [HLSize: 2, LR: 0.01, Loss: MSE]
+Validation Accuracy: 0.88
+Test Accuracy: 0.69
+======================================
+
+======================================
+center_surround with Hyperparams: [HLSize: 3, LR: 0.01, Loss: MCE]
+Validation Accuracy: 0.975
+Test Accuracy: 0.735
+======================================
+
+======================================
+center_surround with Hyperparams: [HLSize: 3, LR: 0.01, Loss: MSE]
+Validation Accuracy: 0.96
+Test Accuracy: 0.755
+======================================
+
+======================================
+center_surround with Hyperparams: [HLSize: 5, LR: 0.01, Loss: MCE]
+Validation Accuracy: 0.965
+Test Accuracy: 0.74
+======================================
+
+======================================
+center_surround with Hyperparams: [HLSize: 5, LR: 0.01, Loss: MSE]
+Validation Accuracy: 0.965
+Test Accuracy: 0.755
+======================================
+
+======================================
+center_surround with Hyperparams: [HLSize: 7, LR: 0.01, Loss: MCE]
+Validation Accuracy: 0.97
+Test Accuracy: 0.76
+======================================
+
+======================================
+center_surround with Hyperparams: [HLSize: 7, LR: 0.01, Loss: MSE]
+Validation Accuracy: 0.965
+Test Accuracy: 0.76
+======================================
+
+======================================
+center_surround with Hyperparams: [HLSize: 9, LR: 0.01, Loss: MCE]
+Validation Accuracy: 0.955
+Test Accuracy: 0.755
+======================================
+
+======================================
+center_surround with Hyperparams: [HLSize: 9, LR: 0.01, Loss: MSE]
+Validation Accuracy: 0.96
+Test Accuracy: 0.77
+======================================
+
+======================================
+spiral with Hyperparams: [HLSize: 2, LR: 0.01, Loss: MCE]
+Validation Accuracy: 0.715
+Test Accuracy: 0.75
+======================================
+
+======================================
+spiral with Hyperparams: [HLSize: 2, LR: 0.01, Loss: MSE]
+Validation Accuracy: 0.71
+Test Accuracy: 0.75
+======================================
+
+======================================
+spiral with Hyperparams: [HLSize: 3, LR: 0.01, Loss: MCE]
+Validation Accuracy: 0.905
+Test Accuracy: 0.9
+======================================
+
+======================================
+spiral with Hyperparams: [HLSize: 3, LR: 0.01, Loss: MSE]
+Validation Accuracy: 0.91
+Test Accuracy: 0.905
+======================================
+
+======================================
+spiral with Hyperparams: [HLSize: 5, LR: 0.01, Loss: MCE]
+Validation Accuracy: 0.91
+Test Accuracy: 0.935
+======================================
+
+======================================
+spiral with Hyperparams: [HLSize: 5, LR: 0.01, Loss: MSE]
+Validation Accuracy: 0.9
+Test Accuracy: 0.92
+======================================
+
+======================================
+spiral with Hyperparams: [HLSize: 7, LR: 0.01, Loss: MCE]
+Validation Accuracy: 0.925
+Test Accuracy: 0.935
+======================================
+
+======================================
+spiral with Hyperparams: [HLSize: 7, LR: 0.01, Loss: MSE]
+Validation Accuracy: 0.99
+Test Accuracy: 0.995
+======================================
+
+======================================
+spiral with Hyperparams: [HLSize: 9, LR: 0.01, Loss: MCE]
+Validation Accuracy: 0.995
+Test Accuracy: 1.0
+======================================
+
+======================================
+spiral with Hyperparams: [HLSize: 9, LR: 0.01, Loss: MSE]
+Validation Accuracy: 0.99
+Test Accuracy: 0.995
+======================================
+
+======================================
+two_gaussians with Hyperparams: [HLSize: 2, LR: 0.01, Loss: MCE]
+Validation Accuracy: 0.98
+Test Accuracy: 0.91
+======================================
+
+======================================
+two_gaussians with Hyperparams: [HLSize: 2, LR: 0.01, Loss: MSE]
+Validation Accuracy: 0.975
+Test Accuracy: 0.91
+======================================
+
+======================================
+two_gaussians with Hyperparams: [HLSize: 3, LR: 0.01, Loss: MCE]
+Validation Accuracy: 0.98
+Test Accuracy: 0.91
+======================================
+
+======================================
+two_gaussians with Hyperparams: [HLSize: 3, LR: 0.01, Loss: MSE]
+Validation Accuracy: 0.975
+Test Accuracy: 0.91
+======================================
+
+======================================
+two_gaussians with Hyperparams: [HLSize: 5, LR: 0.01, Loss: MCE]
+Validation Accuracy: 0.97
+Test Accuracy: 0.915
+======================================
+
+======================================
+two_gaussians with Hyperparams: [HLSize: 5, LR: 0.01, Loss: MSE]
+Validation Accuracy: 0.97
+Test Accuracy: 0.905
+======================================
+
+======================================
+two_gaussians with Hyperparams: [HLSize: 7, LR: 0.01, Loss: MCE]
+Validation Accuracy: 0.98
+Test Accuracy: 0.91
+======================================
+
+======================================
+two_gaussians with Hyperparams: [HLSize: 7, LR: 0.01, Loss: MSE]
+Validation Accuracy: 0.98
+Test Accuracy: 0.915
+======================================
+
+======================================
+two_gaussians with Hyperparams: [HLSize: 9, LR: 0.01, Loss: MCE]
+Validation Accuracy: 0.96
+Test Accuracy: 0.91
+======================================
+
+======================================
+two_gaussians with Hyperparams: [HLSize: 9, LR: 0.01, Loss: MSE]
+Validation Accuracy: 0.975
+Test Accuracy: 0.915
+======================================
+
+======================================
+Best Hyperparams for xor: [HLSize: 7, LR: 0.01, Loss: MCE]
+Validation Accuracy: 0.98
+Test Accuracy: 0.99
+======================================
+
+======================================
+Best Hyperparams for center_surround: [HLSize: 3, LR: 0.01, Loss: MCE]
+Validation Accuracy: 0.975
+Test Accuracy: 0.735
+======================================
+
+======================================
+Best Hyperparams for spiral: [HLSize: 9, LR: 0.01, Loss: MCE]
+Validation Accuracy: 0.995
+Test Accuracy: 1.0
+======================================
+
+======================================
+Best Hyperparams for two_gaussians: [HLSize: 2, LR: 0.01, Loss: MCE]
+Validation Accuracy: 0.98
+Test Accuracy: 0.91
+======================================

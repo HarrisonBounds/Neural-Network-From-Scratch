@@ -96,7 +96,6 @@ class NeuralNetEvaluator:
             neural_network.parameters(),
             lr=hyperparams.lr
         )
-        print(f"Training {dataset_name}")
         # Train the model
         neural_network.train_model(
             neural_network,
@@ -105,10 +104,6 @@ class NeuralNetEvaluator:
             y_train=y_train,
             loss_func=loss_func,
             optimizer=optimizer
-        )
-        print(
-            f"Finished training {dataset_name} with Hyperparams: {hyperparams}" +
-            f" with loss function: {loss_func_name}"
         )
         # Evaluate the model
         valid_accuracy = neural_network.validate_test(
@@ -129,12 +124,16 @@ class NeuralNetEvaluator:
             "valid_accuracy": valid_accuracy,
             "test_accuracy": test_accuracy
         }
-        print(f'Finished training and evaluating {dataset_name}')
+        print(
+            f"Finished training {dataset_name} with Hyperparams: {hyperparams}" +
+            f" with loss function: {loss_func_name}"
+        )
 
     def print_evaluated_models(self):
+        unique_datasets = set([key[0] for key in self.evaluated_models.keys()])
         print(
             f'Evaluated {len(self.evaluated_models)} models over ' +
-            f'{len(self.training_data)} datasets\n'
+            f'{len(unique_datasets)} datasets'
         )
         for key in self.evaluated_models.keys():
             dataset_name, hyper_params = key
@@ -157,10 +156,9 @@ class NeuralNetEvaluator:
         ]
         for key in dataset_models:
             dataset, hp = key
-            assert dataset == dataset_name
             valid_accuracy = self.evaluated_models[key]["valid_accuracy"]
             test_accuracy = self.evaluated_models[key]["test_accuracy"]
-            if test_accuracy > best_test_accuracy:
+            if valid_accuracy > best_valid_accuracy:
                 best_test_accuracy = test_accuracy
                 best_valid_accuracy = valid_accuracy
                 best_hyperparams = hp
@@ -187,22 +185,24 @@ def main():
                          },
         loss_functions={"MCE": nn.CrossEntropyLoss(), "MSE": nn.MSELoss()}
     )
-    datasets = ["xor"]  # , "center_surround", "spiral", "two_gaussians"]
+    datasets = ["xor", "center_surround", "spiral", "two_gaussians"]
     hidden_layer_sizes = [2, 3, 5, 7, 9]
     losses = ["MCE", "MSE"]
-    for hl_size in tqdm(hidden_layer_sizes, desc="Hidden Layer Sizes"):
-        for loss in tqdm(losses, desc="Loss Functions", leave=False):
-            hp = HyperParams(hl_size, 0.01, loss)
-            for dataset in tqdm(datasets, desc="Datasets", leave=False):
+    for dataset in tqdm(datasets, desc="Datasets"):
+        for hl_size in hidden_layer_sizes:
+            for loss in losses:
+                hp = HyperParams(hl_size, 0.01, loss)
                 evaluator.train_model(dataset, loss, hp)
     evaluator.print_evaluated_models()
     for dataset in datasets:
         best_hp, valid_acc, test_acc = evaluator.find_best_hyperparams_for_dataset(
             dataset
         )
+        print("======================================")
         print(f"Best Hyperparams for {dataset}: {best_hp}")
         print(f"Validation Accuracy: {valid_acc}")
         print(f"Test Accuracy: {test_acc}")
+        print("======================================\n")
 
 
 if __name__ == '__main__':
