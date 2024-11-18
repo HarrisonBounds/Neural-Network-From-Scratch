@@ -5,6 +5,7 @@ from torch import Tensor
 from torch.optim import Optimizer
 from typing import Callable, Tuple
 from tqdm import tqdm
+import matplotlib.pyplot as plt
 
 from nn_with_pytorch import NeuralNet
 from plotter import plot_data, plot_decision_surface, plot_decision_regions
@@ -54,6 +55,9 @@ class NeuralNetEvaluator:
         self.evaluated_models: dict[
             Tuple[str, HyperParams]: dict[str: float]
         ] = {}
+        # Store the best models as a map of
+        # dataset_name to the best hyperparams
+        self.best_models: dict[str: HyperParams] = {}
 
     def train_model(
             self,
@@ -98,7 +102,7 @@ class NeuralNetEvaluator:
             lr=hyperparams.lr
         )
         # Train the model
-        neural_network.train_model(
+        epoch_losses = neural_network.train_model(
             neural_network,
             num_epochs=500,
             X_train=X_train,
@@ -123,7 +127,8 @@ class NeuralNetEvaluator:
         key = (dataset_name, hyperparams)
         self.evaluated_models[key] = {
             "valid_accuracy": valid_accuracy,
-            "test_accuracy": test_accuracy
+            "test_accuracy": test_accuracy,
+            "epoch_losses": epoch_losses
         }
         print(
             f"Finished training {dataset_name} with Hyperparams: {hyperparams}" +
@@ -146,14 +151,15 @@ class NeuralNetEvaluator:
             print(f"Test Accuracy: {test_accuracy}")
             print("======================================\n")
 
-    def find_best_hyperparams_for_dataset(self, dataset_name: str):
+    def find_best_hyperparams_for_dataset(self, dataset_name: str, loss_func_name: str):
         # This assumes that the models are already trained and stored
         best_test_accuracy = 0
         best_valid_accuracy = 0
         best_hyperparams = None
         # dataset_models should be all the models where the dataset_name is the key
+        loss_output_size = 2 if loss_func_name == "MCE" else 1
         dataset_models = [
-            key for key in self.evaluated_models.keys() if key[0] == dataset_name
+            key for key in self.evaluated_models.keys() if key[0] == dataset_name and key[1].output_size == loss_output_size
         ]
         for key in dataset_models:
             dataset, hp = key
@@ -163,12 +169,23 @@ class NeuralNetEvaluator:
                 best_test_accuracy = test_accuracy
                 best_valid_accuracy = valid_accuracy
                 best_hyperparams = hp
+        self.best_models[dataset_name] = best_hyperparams
         return best_hyperparams, best_valid_accuracy, best_test_accuracy
 
-    def plot_learning_curve(self, dataset_name: str):
+    def plot_learning_curve(self, dataset_name: str, best_hp: HyperParams):
         # Plot the learning curve for training and validation loss as
         # a function of training epochs
-        pass
+        # find the epoch_losses for the best hyperparams
+        key = (dataset_name, best_hp)
+        loss = "MCE" if best_hp.output_size == 2 else "MSE"
+        epoch_losses = self.evaluated_models[key]["epoch_losses"]
+        plt.figure()
+        plt.plot(range(len(epoch_losses)), epoch_losses,
+                 label=f"{dataset_name}_{best_hp.hl_size}_{loss}")
+        plt.xlabel("Epochs")
+        plt.ylabel("Loss")
+        plt.title(f"{dataset_name} (k={best_hp.hl_size}) Learning Curve")
+        plt.savefig(f"{dataset_name}_{best_hp.hl_size}_learning_curve.png")
 
     def plot_learned_decision_surface(self, dataset_name: str):
         # Plot the learned decision surface along with observations from the test set
@@ -197,21 +214,39 @@ def main():
     )
     datasets = ["xor", "center_surround", "spiral", "two_gaussians"]
     hidden_layer_sizes = [2, 3, 5, 7, 9]
-    loss = "MSE"
+    losses = ["MCE", "MSE"]
+    best_hps_map = {
+        "xor_MCE": HyperParams(7, 0.01, "MCE"),
+        "xor_MSE": HyperParams(9, 0.01, "MSE"),
+        "center_surround_MCE": HyperParams(3, 0.01, "MCE"),
+        "center_surround_MSE": HyperParams(3, 0.01, "MSE"),
+        "spiral_MCE": HyperParams(9, 0.01, "MCE"),
+        "spiral_MSE": HyperParams(9, 0.01, "MSE"),
+        "two_gaussians_MCE": HyperParams(2, 0.01, "MCE"),
+        "two_gaussians_MSE": HyperParams(3, 0.01, "MSE")
+    }
     for dataset in tqdm(datasets, desc="Datasets"):
-        for hl_size in hidden_layer_sizes:
-            hp = HyperParams(hl_size, 0.01, loss)
+        for loss in losses:
+            dataset_loss = f"{dataset}_{loss}"
+            hp = best_hps_map[dataset_loss]
             evaluator.train_model(dataset, loss, hp)
+    # for dataset in tqdm(datasets, desc="Datasets"):
+    #     for hl_size in hidden_layer_sizes:
+    #         for loss in losses:
+    #             hp = HyperParams(hl_size, 0.01, loss)
+    #             evaluator.train_model(dataset, loss, hp)
     evaluator.print_evaluated_models()
     for dataset in datasets:
-        best_hp, valid_acc, test_acc = evaluator.find_best_hyperparams_for_dataset(
-            dataset
-        )
-        print("======================================")
-        print(f"Best Hyperparams for {dataset}: {best_hp}")
-        print(f"Validation Accuracy: {valid_acc}")
-        print(f"Test Accuracy: {test_acc}")
-        print("======================================\n")
+        for loss_name in losses:
+            best_hp, valid_acc, test_acc = evaluator.find_best_hyperparams_for_dataset(
+                dataset, loss_name
+            )
+            print("======================================")
+            print(f"Best Hyperparams for {dataset}: {best_hp}")
+            print(f"Validation Accuracy: {valid_acc}")
+            print(f"Test Accuracy: {test_acc}")
+            print("======================================\n")
+            evaluator.plot_learning_curve(dataset, best_hp)
 
 
 if __name__ == '__main__':

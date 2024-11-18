@@ -52,9 +52,9 @@ class NeuralNet(nn.Module):
             loss_func (Callable): callable function to perform the loss calculation on the output
             optimizer (Optimizer): Built in optimzer to perform momentum based learning
         """
-        for t in range(num_epochs):
-            # print(
-            #     f"Epoch {t+1}\n===================================================")
+        learning_curve = []
+        for epoch in range(num_epochs):
+            epoch_loss = 0
             for i in range(len(X_train)):
 
                 x = X_train[i]
@@ -67,7 +67,11 @@ class NeuralNet(nn.Module):
                 loss.backward()
                 optimizer.step()
 
-            # print(f"Loss: {loss}")
+                # Accumulate loss for the epoch
+                epoch_loss += loss.item()
+            # Learning curve should be average loss per epoch
+            learning_curve.append(epoch_loss / len(X_train))
+        return learning_curve
 
     def validate_test(self, model: nn.Module, X_test: Tensor, y_test: Tensor, loss_func_label: str) -> float:
         """Test the validation and test set accuracies by divinding the correct predictions by the total predicitions
