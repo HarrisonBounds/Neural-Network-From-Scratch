@@ -293,7 +293,7 @@ def main():
                     dataset, loss_name
                 )
                 print("======================================")
-                print(f"Best Hyperparams for {dataset}: {best_hp}")
+                print(f"Best Hyperparams for {dataset}: {best_hp} Reg={reg}")
                 print(f"Validation Accuracy: {valid_acc}")
                 print(f"Test Accuracy: {test_acc}")
                 print("======================================\n")
