@@ -56,8 +56,9 @@ class NeuralNetEvaluator:
             Tuple[str, HyperParams]: dict[str: float]
         ] = {}
         # Store the best models as a map of
-        # dataset_name to the best hyperparams
-        self.best_models: dict[str: HyperParams] = {}
+        # dataset_name_loss to the model itself
+        self.all_models: dict[str: dict[HyperParams: NeuralNet]] = {}
+        self.best_models: dict[str: NeuralNet] = {}
 
     def train_model(
             self,
@@ -133,6 +134,10 @@ class NeuralNetEvaluator:
             "training_losses": training_losses,
             "validation_losses": validation_losses
         }
+        dataset_loss = f"{dataset_name}_{loss_func_name}"
+        if dataset_loss not in self.all_models:
+            self.all_models[dataset_loss] = {}
+        self.all_models[dataset_loss][hyperparams] = neural_network
         print(
             f"Finished training {dataset_name} with Hyperparams: {hyperparams}" +
             f" with loss function: {loss_func_name}"
@@ -172,10 +177,14 @@ class NeuralNetEvaluator:
                 best_test_accuracy = test_accuracy
                 best_valid_accuracy = valid_accuracy
                 best_hyperparams = hp
-        self.best_models[dataset_name] = best_hyperparams
+        dataset_loss = f"{dataset_name}_{loss_func_name}"
+        model_dict = self.all_models[dataset_loss]
+        # Find the entry that matches the best hyperparams
+        best_model = model_dict[best_hyperparams]
+        self.best_models[dataset_loss] = best_model
         return best_hyperparams, best_valid_accuracy, best_test_accuracy
 
-    def plot_learning_curve(self, dataset_name: str, best_hp: HyperParams):
+    def plot_learning_curves(self, dataset_name: str, best_hp: HyperParams):
         # Plot the learning curve for training and validation loss as
         # a function of training epochs
         # find the epoch_losses for the best hyperparams
@@ -197,9 +206,17 @@ class NeuralNetEvaluator:
                 loss}_learning_curve.png"
         )
 
-    def plot_learned_decision_surface(self, dataset_name: str):
+    def plot_learned_decision_surfaces(self, dataset_name: str, loss_func_name: str):
         # Plot the learned decision surface along with observations from the test set
-        pass
+        dataset_loss = f"{dataset_name}_{loss_func_name}"
+        # plot_decision_surface(model=self.best_models[dataset_loss])
+        X_test = pd.read_csv(self.test_data[dataset_name])
+        y_test = X_test["label"].values
+        plot_decision_regions(
+            features=X_test.drop("label", axis=1).values,
+            targets=y_test,
+            model=self.best_models[dataset_loss]
+        )
 
 
 def main():
@@ -222,9 +239,9 @@ def main():
                          },
         loss_functions={"MCE": nn.CrossEntropyLoss(), "MSE": nn.MSELoss()}
     )
-    datasets = ["xor", "center_surround", "spiral", "two_gaussians"]
+    datasets = ["xor"]  # , "center_surround", "spiral", "two_gaussians"]
     hidden_layer_sizes = [2, 3, 5, 7, 9]
-    losses = ["MCE", "MSE"]
+    losses = ["MCE"]  # , "MSE"]
     # After running and manually inspecting the results,
     # these are the best HPs for each dataset and loss function
     best_hps_map = {
@@ -259,7 +276,8 @@ def main():
             print(f"Validation Accuracy: {valid_acc}")
             print(f"Test Accuracy: {test_acc}")
             print("======================================\n")
-            evaluator.plot_learning_curve(dataset, best_hp)
+            # evaluator.plot_learning_curves(dataset, best_hp)
+            evaluator.plot_learned_decision_surfaces(dataset, loss_name)
 
 
 if __name__ == '__main__':

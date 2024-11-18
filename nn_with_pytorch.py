@@ -92,6 +92,20 @@ class NeuralNet(nn.Module):
 
         return training_learning_curve, validation_learning_curve
 
+    def predict(self, X: Tensor) -> Tensor:
+        """Predict the output of the network
+
+        Args:
+            X (Tensor): Input data without labels
+
+        Returns:
+            Tensor: Predicted output of the network
+        """
+        model = self
+        model.eval()
+        with torch.no_grad():
+            return model(X)
+
     def validate_test(self, model: nn.Module, X_test: Tensor, y_test: Tensor, loss_func_label: str) -> float:
         """Test the validation and test set accuracies by divinding the correct predictions by the total predicitions
 
@@ -120,10 +134,7 @@ class NeuralNet(nn.Module):
                     pred = model(x)
 
                 # Clipping: If the second element has higher than a 50% probability, then it is of class 1, otherwise class 0
-                if pred >= 0.5:
-                    pred = 1
-                elif pred < 0.5:
-                    pred = 0
+                pred = 1 if pred >= 0.5 else 0
 
                 if pred == y:
                     correct += 1
@@ -199,13 +210,16 @@ def main():
         optimizer = torch.optim.Adam(ff.parameters(), lr=lr)
 
         # Train Model
-        ff.train_model(ff, num_epochs, X_train, y_train, loss_func, optimizer)
+        ff.train_model(ff, num_epochs, X_train, y_train, X_valid, y_valid,
+                       loss_func, optimizer)
 
         # Evaluate Model
         valid_accuracy = ff.validate_test(
-            ff, X_valid, y_valid, loss_function_label)
+            ff, X_valid, y_valid, loss_function_label
+        )
         test_accuracy = ff.validate_test(
-            ff, X_test, y_test, loss_function_label)
+            ff, X_test, y_test, loss_function_label
+        )
 
         # Append evaluation metrics to a list for easy access
         valid_accuracy_list.append(valid_accuracy)
