@@ -47,6 +47,7 @@ class NeuralNetEvaluator:
         self.test_data = test_data
         self.validation_data = validation_data
         self.loss_functions = loss_functions
+        self.used_regularizer = ""
 
         # Store the evaluated models as a dictionary that maps
         # a tuple of the dataset name and the hyperparams to a
@@ -64,6 +65,7 @@ class NeuralNetEvaluator:
             self,
             dataset_name: str,
             loss_func_name: str,
+            regularizer: str,
             hyperparams: HyperParams):
         # Assign hyperparams to default if not provided
         # Convert data to tensors
@@ -92,10 +94,13 @@ class NeuralNetEvaluator:
             y_test = torch.tensor(y_test, dtype=torch.float32)
             y_validation = torch.tensor(y_validation, dtype=torch.float32)
         # Build network with loss function and optimizer
+        if regularizer is not None or regularizer != "":
+            self.used_regularizer = regularizer
         neural_network = NeuralNet(
             X_train.shape[1],
             hl_size=hyperparams.hl_size,
-            output_size=2 if loss_func_name == "MCE" else 1
+            output_size=2 if loss_func_name == "MCE" else 1,
+            regularizer=regularizer if regularizer != "" else None
         )
         loss_func = self.loss_functions[loss_func_name]
         optimizer = torch.optim.Adam(
@@ -140,7 +145,8 @@ class NeuralNetEvaluator:
         self.all_models[dataset_loss][hyperparams] = neural_network
         print(
             f"Finished training {dataset_name} with Hyperparams: {hyperparams}" +
-            f" with loss function: {loss_func_name}"
+            f" with loss function: {
+                loss_func_name} and regularizer: {"None" if regularizer == "" else regularizer}"
         )
 
     def print_evaluated_models(self):
@@ -193,17 +199,29 @@ class NeuralNetEvaluator:
         training_losses = self.evaluated_models[key]["training_losses"]
         validation_losses = self.evaluated_models[key]["validation_losses"]
         plt.figure()
-        plt.plot(range(len(training_losses)), training_losses,
-                 label=f"{dataset_name}_{loss}_{best_hp.hl_size}_training_loss")
-        plt.plot(range(len(validation_losses)), validation_losses,
-                 label=f"{dataset_name}_{loss}_{best_hp.hl_size}_validation_loss")
+        if self.used_regularizer is not None or self.used_regularizer != "":
+            reg_tag = f"_{self.used_regularizer}"
+        plt.plot(
+            range(len(training_losses)), training_losses,
+            label=f"{dataset_name}_{loss}_{
+                best_hp.hl_size}{reg_tag}_training_loss"
+        )
+        plt.plot(
+            range(len(validation_losses)), validation_losses,
+            label=f"{dataset_name}_{loss}_{
+                best_hp.hl_size}{reg_tag}_validation_loss"
+        )
         plt.xlabel("Epochs")
         plt.ylabel("Loss")
-        plt.title(f"{dataset_name} (k={best_hp.hl_size}) Learning Curves")
+        plt.title(
+            f"{dataset_name} (k={best_hp.hl_size}, " +
+            f"reg={'None' if self.used_regularizer == '' else self.used_regularizer}" +
+            f", loss={loss}) Learning Curve"
+        )
         plt.legend(["Training Loss", "Validation Loss"])
         plt.savefig(
             f"plots/{dataset_name}_{best_hp.hl_size}_{
-                loss}_learning_curve.png"
+                loss}{reg_tag}_learning_curve.png"
         )
 
     def plot_learned_decision_surfaces(self, dataset_name: str, loss_func_name: str):
@@ -242,6 +260,7 @@ def main():
     datasets = ["xor"]  # , "center_surround", "spiral", "two_gaussians"]
     hidden_layer_sizes = [2, 3, 5, 7, 9]
     losses = ["MCE"]  # , "MSE"]
+    regularizers = ["", "norm", "orthogonal"]  # Also include no regularizer
     # After running and manually inspecting the results,
     # these are the best HPs for each dataset and loss function
     best_hps_map = {
@@ -256,9 +275,10 @@ def main():
     }
     for dataset in tqdm(datasets, desc="Datasets"):
         for loss in losses:
-            dataset_loss = f"{dataset}_{loss}"
-            hp = best_hps_map[dataset_loss]
-            evaluator.train_model(dataset, loss, hp)
+            for reg in regularizers:
+                dataset_loss = f"{dataset}_{loss}"
+                hp = best_hps_map[dataset_loss]
+                evaluator.train_model(dataset, loss, reg, hp)
     # Uncomment this block to train models with different hyperparams
     # for dataset in tqdm(datasets, desc="Datasets"):
     #     for hl_size in hidden_layer_sizes:
@@ -276,8 +296,8 @@ def main():
             print(f"Validation Accuracy: {valid_acc}")
             print(f"Test Accuracy: {test_acc}")
             print("======================================\n")
-            # evaluator.plot_learning_curves(dataset, best_hp)
-            evaluator.plot_learned_decision_surfaces(dataset, loss_name)
+            evaluator.plot_learning_curves(dataset, best_hp)
+            # evaluator.plot_learned_decision_surfaces(dataset, loss_name)
 
 
 if __name__ == '__main__':

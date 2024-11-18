@@ -9,13 +9,14 @@ from typing import Callable
 
 
 class NeuralNet(nn.Module):
-    def __init__(self, input_size: int, hl_size: int, output_size: int):
+    def __init__(self, input_size: int, hl_size: int, output_size: int, regularizer: str = None):
         """Initialize the network with the size of each layer
 
         Args:
             input_size (int): Number of features in the dataset
             hl_size (int): hidden layer size
             output_size (int): output size (1 for MSE loss, 2 for MCE loss)
+            regularizer (str, optional): Regularization term [norm, orthogonal]. Defaults to None.
         """
         super(NeuralNet, self).__init__()
         self.linear1 = nn.Linear(input_size, hl_size)
@@ -25,6 +26,11 @@ class NeuralNet(nn.Module):
             self.output = nn.Softmax()
         elif output_size == 1:
             self.output = nn.Sigmoid()
+        self.regularizer = regularizer
+        self.regularizer_lambda = 0.01
+        self.device = torch.device(
+            "cuda" if torch.cuda.is_available() else "cpu")
+        print(f"Using {self.device} for training")
 
     def forward(self, x: Tensor) -> Tensor:
         """Forward pass for the neural network
@@ -66,6 +72,22 @@ class NeuralNet(nn.Module):
 
                 y_pred = model(x)
                 loss = loss_func(y_pred, y)
+
+                if self.regularizer == "norm":
+                    input_layer_weights = model.linear1.weight
+                    regularizer_value = torch.sum(input_layer_weights ** 2)
+                    loss += self.regularizer_lambda * regularizer_value
+                elif self.regularizer == "orthogonal":
+                    # encourage orthogonality in the intermediate decision
+                    # boundaries learned in the first layer
+                    input_layer_weights = model.linear1.weight
+                    dot_products = torch.mm(
+                        input_layer_weights, input_layer_weights.t()
+                    )
+                    identity = torch.eye(dot_products.shape[0])
+                    orthogonality_loss = torch.sum(
+                        (dot_products - identity) ** 2)
+                    loss += self.regularizer_lambda * orthogonality_loss
 
                 optimizer.zero_grad()
                 loss.backward()
