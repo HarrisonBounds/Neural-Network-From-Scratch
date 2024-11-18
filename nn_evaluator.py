@@ -257,12 +257,13 @@ def main():
                          },
         loss_functions={"MCE": nn.CrossEntropyLoss(), "MSE": nn.MSELoss()}
     )
-    datasets = ["xor"]  # , "center_surround", "spiral", "two_gaussians"]
+    datasets = ["xor", "center_surround", "spiral", "two_gaussians"]
     hidden_layer_sizes = [2, 3, 5, 7, 9]
-    losses = ["MCE"]  # , "MSE"]
-    regularizers = ["", "norm", "orthogonal"]  # Also include no regularizer
+    losses = ["MCE", "MSE"]
+    regularizers = ["", "norm", "orthogonal"]
     # After running and manually inspecting the results,
     # these are the best HPs for each dataset and loss function
+    # These should also be used when using regularizers
     best_hps_map = {
         "xor_MCE": HyperParams(7, 0.01, "MCE"),
         "xor_MSE": HyperParams(9, 0.01, "MSE"),
@@ -273,31 +274,31 @@ def main():
         "two_gaussians_MCE": HyperParams(2, 0.01, "MCE"),
         "two_gaussians_MSE": HyperParams(3, 0.01, "MSE")
     }
-    for dataset in tqdm(datasets, desc="Datasets"):
-        for loss in losses:
-            for reg in regularizers:
+    for reg in regularizers:
+        for dataset in tqdm(datasets, desc="Datasets"):
+            for loss in losses:
                 dataset_loss = f"{dataset}_{loss}"
                 hp = best_hps_map[dataset_loss]
                 evaluator.train_model(dataset, loss, reg, hp)
-    # Uncomment this block to train models with different hyperparams
-    # for dataset in tqdm(datasets, desc="Datasets"):
-    #     for hl_size in hidden_layer_sizes:
-    #         for loss in losses:
-    #             hp = HyperParams(hl_size, 0.01, loss)
-    #             evaluator.train_model(dataset, loss, hp)
-    evaluator.print_evaluated_models()
-    for dataset in datasets:
-        for loss_name in losses:
-            best_hp, valid_acc, test_acc = evaluator.find_best_hyperparams_for_dataset(
-                dataset, loss_name
-            )
-            print("======================================")
-            print(f"Best Hyperparams for {dataset}: {best_hp}")
-            print(f"Validation Accuracy: {valid_acc}")
-            print(f"Test Accuracy: {test_acc}")
-            print("======================================\n")
-            evaluator.plot_learning_curves(dataset, best_hp)
-            # evaluator.plot_learned_decision_surfaces(dataset, loss_name)
+        # Uncomment this block to train models with different hyperparams
+        # for dataset in tqdm(datasets, desc="Datasets"):
+        #     for hl_size in hidden_layer_sizes:
+        #         for loss in losses:
+        #             hp = HyperParams(hl_size, 0.01, loss)
+        #             evaluator.train_model(dataset, loss, hp)
+        evaluator.print_evaluated_models()
+        for dataset in datasets:
+            for loss_name in losses:
+                best_hp, valid_acc, test_acc = evaluator.find_best_hyperparams_for_dataset(
+                    dataset, loss_name
+                )
+                print("======================================")
+                print(f"Best Hyperparams for {dataset}: {best_hp}")
+                print(f"Validation Accuracy: {valid_acc}")
+                print(f"Test Accuracy: {test_acc}")
+                print("======================================\n")
+                evaluator.plot_learning_curves(dataset, best_hp)
+                # evaluator.plot_learned_decision_surfaces(dataset, loss_name)
 
 
 if __name__ == '__main__':
