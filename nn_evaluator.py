@@ -225,7 +225,7 @@ class NeuralNetEvaluator:
                 loss}{reg_tag}_learning_curve.png"
         )
 
-    def plot_learned_decision_surfaces(self, dataset_name: str, loss_func_name: str):
+    def plot_learned_decision_surfaces(self, dataset_name: str, loss_func_name: str, regularizer: str):
         # Plot the learned decision surface along with observations from the test set
         if loss_func_name == "MCE":
             print(f"Cannot plot decision surface for MCE loss function")
@@ -234,7 +234,7 @@ class NeuralNetEvaluator:
         # plot_decision_surface(model=self.best_models[dataset_loss])
         X_test = pd.read_csv(self.test_data[dataset_name])
         y_test = X_test["label"].values
-        print(f'Drawing Decision Region')
+        print(f'Drawing Decision Region for {dataset_loss}_{regularizer}')
         fig, ax = plt.subplots()
         k = self.best_models[dataset_loss].hl_size
         plot_decision_regions(
@@ -242,10 +242,10 @@ class NeuralNetEvaluator:
             targets=y_test,
             model=self.best_models[dataset_loss],
             axis=ax,
-            title=f"{dataset_loss} (k={k}) Decision Regions"
+            title=f"{dataset_loss}_{regularizer} (k={k}) Decision Regions"
         )
         plt.savefig(
-            f"plots/{dataset_name}_{loss_func_name}_decision_regions.png"
+            f"plots/{dataset_name}_{regularizer}_{loss_func_name}_decision_regions.png"
         )
 
 
@@ -313,7 +313,8 @@ def main():
                 print(f"Test Accuracy: {test_acc}")
                 print("======================================\n")
                 # evaluator.plot_learning_curves(dataset, best_hp)
-                evaluator.plot_learned_decision_surfaces(dataset, loss_name)
+                evaluator.plot_learned_decision_surfaces(
+                    dataset, loss_name, reg)
     print(f"============ Finished training and evaluating models ============")
 
 
