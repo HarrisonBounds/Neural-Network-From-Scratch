@@ -271,7 +271,7 @@ def main():
     )
     datasets = ["xor", "center_surround", "spiral", "two_gaussians"]
     hidden_layer_sizes = [2, 3, 5, 7, 9]
-    losses = ["MSE", "MCE"]
+    losses = ["MSE"]  # , "MCE"]
     regularizers = ["", "norm", "orthogonal"]
     # After running and manually inspecting the results,
     # these are the best HPs for each dataset and loss function
@@ -306,8 +306,8 @@ def main():
                 )
                 print("======================================")
                 print(
-                    f"Best Hyperparams for {dataset}: 
-                        {best_hp} Reg={"None" if reg == '' else reg}"
+                    f'Best Hyperparams for {dataset}: ' +
+                    f'{best_hp} Reg={'None' if reg == '' else reg}'
                 )
                 print(f"Validation Accuracy: {valid_acc}")
                 print(f"Test Accuracy: {test_acc}")
@@ -315,6 +315,7 @@ def main():
                 # evaluator.plot_learning_curves(dataset, best_hp)
                 evaluator.plot_learned_decision_surfaces(dataset, loss_name)
     print(f"============ Finished training and evaluating models ============")
+
 
 if __name__ == '__main__':
     main()
