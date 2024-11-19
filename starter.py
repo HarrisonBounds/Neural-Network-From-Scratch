@@ -41,48 +41,36 @@ class NeuralNetwork():
         self.a2 = self.sigmoid(self.z2)
         return self.a2
     
-    def backward(self, y_true):
-        dL_da2 = -2 * (self.a2 - y_true)
-        da2_dz2 = (self.a2) * (1 - self.a2)
+    def backward(self, y_pred, X, y_true):
+        dL_da2 = y_pred - y_true
+        da2_dz2 = y_pred * (1 - y_pred) #sigmoid derivative
+        dL_dz2 = dL_da2 * da2_dz2
         dz2_dw2 =  self.a1
         
-        dL_da2 = dL_da2.reshape(-1, 1)
-        da2_dz2 = da2_dz2.reshape(-1, 1)
-        dz2_dw2 = dz2_dw2.reshape(-1, 1)
+        dL_dw2 = np.dot(dz2_dw2.T, dL_dz2)
+        dL_b2 = np.sum(dL_dz2, axis=0, keepdims=True)
+
         
-        # print("dL_da2 shape: ", dL_da2.shape)
-        # print("da2_dz2 shape: ", da2_dz2.shape)
-        # print("dz2_dw2 shape: ", dz2_dw2.shape)
+        dL_da1 = np.dot(dL_dz2, self.layer2.weights.T)
+        dL_dz1 = dL_da1 * (self.a1 * (1 - self.a1))
         
-        dL_dw2 = np.dot(dz2_dw2, dL_da2 * da2_dz2)
-        
-        # print("dL_dw2 shape: ", dL_dw2.shape)
-        
-        dz2_da1 = self.layer2.weights
-        da1_dz1 = (self.a1) * (1 - self.a1)
-        dz1_dw1 = self.data
-        
-        dz2_da1 = dz2_da1.reshape(-1, 1)
-        da1_dz1 = da1_dz1.reshape(-1, 1)
-        dz1_dw1 = dz1_dw1.reshape(-1, 1)
-        
-        # print("\ndz2_da1 shape: ", dz2_da1.shape)
-        # print("da1_dz1 shape: ", da1_dz1.shape)
-        # print("dz1_dw1 shape: ", dz1_dw1.shape)
-        
-        dL_dw1 = np.dot(dz1_dw1, (dL_da2 * da2_dz2 * dz2_da1 * da1_dz1).T)
-        
-        # print("dL_dw1 shape: ", dL_dw1.shape)
-        
+        X = X.reshape(-1, 1)
+        dL_dw1 = np.dot(X, dL_dz1)
+        dL_b1 = np.sum(dL_dz1, axis=0, keepdims=True)
+
+    
         self.layer1.weights -= self.learning_rate * dL_dw1
+        self.layer1.biases -= self.learning_rate * dL_b1
         self.layer2.weights -= self.learning_rate * dL_dw2
+        self.layer2.biases -= self.learning_rate * dL_b2
+        
     
 
 def main():
     hidden_layer_size = 5
     learning_rate = 0.01
-    num_epochs = 1000
-    #np.random.seed(11)
+    num_epochs = 500
+    np.random.seed(11)
     y_preds = []
     correct = 0
     total = 0
@@ -123,9 +111,9 @@ def main():
             nn.data = input_data
             nn.label = label
 
-            result = nn.forward_pass()
-            loss = nn.mse(y[j], result)
-            nn.backward(y[j])
+            y_pred = nn.forward_pass()
+            loss = nn.mse(y[j], y_pred)
+            nn.backward(y_pred, input_data, y[j])
             
         print(f"Loss: {loss}")
     
