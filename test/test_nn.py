@@ -1,9 +1,9 @@
-from starter import NN
+from nn_from_scratch_autograd import NN
 import autograd.numpy as anp
 import numpy as np
 
 layers = [3, 2, 3]
-learning_rate = 0.01
+learning_rate = 0.5
 weights = [[[0.0, 0.0],
             [0.4963, 0.7682],
             [0.0885, 0.1320],
@@ -67,3 +67,14 @@ def test_back_prop():
 
     assert np.round(gradients[0][1][0], 4) == 0.0117
     assert np.round(gradients[1][1][0], 4) == -0.3835
+
+
+def test_update_weights():
+    X = anp.array([0.35, 0.20, 0.50])
+    y = anp.array([1.0, 0.0, 0.0])
+    nn.model(X, params)
+    gradients = nn.back_propagation(X, y)
+    nn.update_weights(gradients)
+
+    assert np.round(nn.weights[0][1][0], 4) == 0.4904
+    assert np.round(nn.weights[1][1][0], 4) == 0.6819
